@@ -1,2 +1,2 @@
 # DubHacks2020
-Temporary name
+ReadAct processes new articles to identify political candidates, initiatives, and bias to motivate people to act on what they read!
