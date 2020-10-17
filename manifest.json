@@ -3,15 +3,9 @@
   "name": "ReadAct",
   "version": "1.0",
 
-  "description": "TODO",
+  "description": "ReadAct processes new articles to identify political candidates, initiatives, and bias to motivate people to act on what they read!",
 
   "homepage_url": "https://github.com/abhishekbabu/ReadAct",
-  "icons": {
-    "16": "",
-    "32": "",
-    "48": "",
-    "128": ""
-  },
 
   "background": {
     "scripts": ["js/background.js"],
@@ -19,13 +13,7 @@
   },
   "permissions": ["alarms", "storage"],
   "browser_action": {
-    "default_popup": "html/popup.html",
-    "default_icon": {
-      "16": "",
-      "32": "",
-      "48": "",
-      "128": ""
-    }
+    "default_popup": "html/popup.html"
   },
   "content_security_policy": "script-src 'self' https://d3js.org/d3.v5.min.js 'unsafe-eval'; object-src 'self'"
 }
