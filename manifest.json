@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+  "name": "ReadAct",
+  "version": "1.0",
+
+  "description": "TODO",
+
+  "homepage_url": "https://github.com/abhishekbabu/ReadAct",
+  "icons": {
+    "16": "",
+    "32": "",
+    "48": "",
+    "128": ""
+  },
+
+  "background": {
+    "scripts": ["js/background.js"],
+    "persistent": false
+  },
+  "permissions": ["alarms", "storage"],
+  "browser_action": {
+    "default_popup": "html/popup.html",
+    "default_icon": {
+      "16": "",
+      "32": "",
+      "48": "",
+      "128": ""
+    }
+  },
+  "content_security_policy": "script-src 'self' https://d3js.org/d3.v5.min.js 'unsafe-eval'; object-src 'self'"
+}
