@@ -32,11 +32,11 @@ function highlight(keyword) {
     });
 }
 
-// $('[data-toggle="popover-click"]').popover({
-//       html: true,
-//       trigger: 'click',
-//       placement: 'top',
-//       content: function () { return 'Hello World!'; }
-// });
-
 highlightAll(['Tana']);
+
+$('[data-toggle="popover-click"]').popover({
+    html: true,
+    trigger: 'click',
+    placement: 'top',
+    content: function () { return 'Hello World!'; }
+});
