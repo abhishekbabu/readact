@@ -57,6 +57,7 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
                 ]
             })
         }
+        bias(plainText);
         textAnalytics(body);
     }
 });
@@ -86,7 +87,7 @@ function textAnalytics(body) {
             // Request parameters
             "showStats": true,
         };
-      
+
         $.ajax({
             url: "https://westus2.api.cognitive.microsoft.com/text/analytics/v2.1/entities?" + $.param(params),
             beforeSend: function(xhrObj){
@@ -107,6 +108,22 @@ function textAnalytics(body) {
         });
     });
 
+}
+
+function bias(article) {
+  apikey = "gAAAAABeVpQJKRM5BqPX91XW2AKfz8pJosk182maAweJcm5ORAkkBFj__d2feG4H5KIeOKFyhUVSY_uGImiaSBCwy2L6nWxx4g=="
+
+  const data = new URLSearchParams();
+  data.append("API", apikey);
+  data.append("Text", article);
+
+  fetch('https://api.thebipartisanpress.com/api/endpoints/beta/robert', {
+        method: 'POST',
+        body: data
+    })
+    .then(response => response.text())
+    .then((response) => console.log(response))
+    .catch(error => console.error(error));
 }
 
 function parseResults(results) {
@@ -139,7 +156,7 @@ function onWindowLoad() {
 
 window.onload = onWindowLoad;
 
-// // Highlighting 
+// // Highlighting
 
 // function highlightKeywords() {
 //     chrome.tabs.executeScript(null, {
