@@ -44,7 +44,7 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
         input["documents"] = documents;
         var body = JSON.stringify(input);
         console.log(body)
-        textAnalytics(body);
+        //textAnalytics(body);
     }
 });
 
