@@ -5,4 +5,14 @@ body {
 header {
     background-color: #002868;
     color: white;
+    padding: 10px;
+    font-weight: 500;
+}
+
+.nav {
+    border-bottom: 1px solid #E5E5E5;
+}
+
+.nav-link {
+    color: #000000;
 }
