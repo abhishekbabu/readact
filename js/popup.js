@@ -196,7 +196,7 @@ function addCandidateToHighlights(actualMatches, data) {
             highlights[match].push("");
         }
         if (data["state_code"] != null) {
-            highlights[match].push(data["state_code"]);
+            highlights[match].push(data["state_code"].toUpperCase());
         } else {
             highlights[match].push("");
         }
@@ -213,6 +213,7 @@ function addCandidateToHighlights(actualMatches, data) {
         }
         highlights[match].push(data["candidate_url"])
     }
+    displayKeywords(highlights);
 }
 
 function onWindowLoad() {
@@ -291,3 +292,30 @@ chrome.storage.sync.set({
         file: "js/highlight.js"
     });
 });
+
+function displayKeywords(keywords) {
+    let newHTML = "";
+    for (let key in keywords) {
+        let value = keywords[key];
+        if (value[0] == "candidate") {
+            newHTML +=  '<div class="p-3 term">' +
+                            '<div class="d-flex">' +
+                                '<p class="mb-0 main-term">' + key + '</p>' +
+                                '<p class="mb-0 style="font-size: small; font-weight: 300;">&emsp;political candidate</p>' +
+                            '</div>' +
+                            '<p class="mb-0">' + value[2] + ' ' + value[3] + '</p>' +
+                            '<p class="mb-0">' + value[5] + '</p>' +
+                            '<a href=' + value[6] + 'class="mb-0">' + value[6] + '</a>' +
+                        '</div>';
+        } else if (value[0] == "measure") {
+            newHTML +=  '<div class="p-3 term">' +
+                            '<div class="d-flex">' +
+                                '<p class="mb-0 main-term">' + key + '</p>' +
+                                '<p class="mb-0 style="font-size: small; font-weight: 300;">&emsp;political measure</p>' +
+                            '</div>' +
+                            '<p class="mb-0">' + value[1] + '</p>' +
+                        '</div>';
+        }
+    }
+    document.getElementById("term-candidate").innerHTML = newHTML;
+}
