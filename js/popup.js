@@ -59,6 +59,7 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
         }
         bias(plainText);
         textAnalytics(body);
+        item("Kamala");
     }
 });
 
@@ -140,6 +141,66 @@ function parseResults(results) {
     }
 
     console.log(usefulEntities);
+}
+
+// function voter_id(search) {
+//   console.log(search);
+//   fetch('https://api.wevoteusa.org/apis/v1/deviceIdGenerate', {
+//         method: 'GET'
+//     })
+//     .then(response => response.text())
+//     .then((response) => item(response, search))
+//     .catch(error => console.error(error));
+// }
+
+function item(candidate){
+  console.log(candidate);
+  var id = "BpMZ1s0iLLUyBnJiqF978sbNUBgUGMna3MNyBOm3qzkInkH2OubPkdUd5f7xip3UscHR54MzqcrB00D9S5RzJbap";
+
+  $(function() {
+      $.get("https://api.wevoteusa.org/apis/v1/searchAll", {
+        text_from_search_field: candidate,
+        voter_device_id: id
+      },
+      function(data, status){
+          alert("Data: " + data + "\nStatus: " + status);
+      })
+      .done(function(data) {
+          alert("success");
+          candidate_search(data, id);
+      })
+      .fail(function() {
+          alert("error");
+      });
+  });
+}
+
+function candidate_search(candidates, voter_id){
+    var i = 0;
+    console.log(candidates);
+    while(candidates["search_results"][i]["kind_of_owner"] !== "CANDIDATE" && i < candidates["search_results"].length){
+      i++;
+    }
+    candidate_id = candidates["search_results"][i]["we_vote_id"];
+
+    $(function() {
+        $.get("https://api.wevoteusa.org/apis/v1/candidateRetrieve", {
+          candidate_we_vote_id: candidate_id,
+          voter_device_id: voter_id
+        },
+        function(data, status){
+            alert("Data: " + data + "\nStatus: " + status);
+        })
+        .done(function(data) {
+            alert("success");
+            console.log(data);
+        })
+        .fail(function() {
+            alert("error");
+        });
+    });
+
+    //collect
 }
 
 function onWindowLoad() {
