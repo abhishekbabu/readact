@@ -59,7 +59,12 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
         }
         bias(plainText);
         textAnalytics(body);
-        item("Kamala");
+        for(person in textAnalytics){
+          item(person);
+          //Not do shit if it's not a candidate
+          //Fetch all candidate info
+          //Put it in a returnable area
+        }
     }
 });
 
@@ -101,7 +106,6 @@ function textAnalytics(body) {
             data: body,
         })
         .done(function(data) {
-            alert("success");
             parseResults(data);
         })
         .fail(function() {
@@ -154,19 +158,14 @@ function parseResults(results) {
 // }
 
 function item(candidate){
-  console.log(candidate);
   var id = "BpMZ1s0iLLUyBnJiqF978sbNUBgUGMna3MNyBOm3qzkInkH2OubPkdUd5f7xip3UscHR54MzqcrB00D9S5RzJbap";
 
   $(function() {
       $.get("https://api.wevoteusa.org/apis/v1/searchAll", {
         text_from_search_field: candidate,
         voter_device_id: id
-      },
-      function(data, status){
-          alert("Data: " + data + "\nStatus: " + status);
       })
       .done(function(data) {
-          alert("success");
           candidate_search(data, id);
       })
       .fail(function() {
@@ -177,7 +176,6 @@ function item(candidate){
 
 function candidate_search(candidates, voter_id){
     var i = 0;
-    console.log(candidates);
     while(candidates["search_results"][i]["kind_of_owner"] !== "CANDIDATE" && i < candidates["search_results"].length){
       i++;
     }
@@ -187,12 +185,8 @@ function candidate_search(candidates, voter_id){
         $.get("https://api.wevoteusa.org/apis/v1/candidateRetrieve", {
           candidate_we_vote_id: candidate_id,
           voter_device_id: voter_id
-        },
-        function(data, status){
-            alert("Data: " + data + "\nStatus: " + status);
         })
         .done(function(data) {
-            alert("success");
             console.log(data);
         })
         .fail(function() {
@@ -260,8 +254,4 @@ function drawLine(response) {
     .attr("y1", 0)
     .attr("x2", (468.0 * ((parseFloat(response) + 42.0) / 84.0)))
     .attr("y2", 200);
-
-    console.log(response);
-    console.log((response + 42.0) / 84.0);
-    console.log(response + 42.0);
 }
