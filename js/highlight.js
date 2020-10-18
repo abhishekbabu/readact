@@ -13,8 +13,9 @@ function highlight(keywords) {
                     for (let key in keywords) {
                         text = text.replace(
                             key,
-                            "<span style=\"background-color: dodgerBlue;\" data-toggle=\"popover-hover\" title=\"" + key + "\" data-content=\"" + keywords[key] + "\">" + key + "</span>"
+                            "<span style=\"background-color: paleGreen;\" data-toggle=\"popover-hover\" title=\"" + key + "\" data-content=\"" + keywords[key] + "\">" + key + "</span>"
                         );
+                        // "<span style=\"background-color: dodgerBlue;\" data-toggle=\"popover-hover\" title=\"" + key + "\" data-content=\"" + keywords[key] + "\">" + key + "</span>"
                     }
                     const newChild = document.createElement("span");
                     newChild.innerHTML = text;
@@ -35,5 +36,5 @@ $('[data-toggle="popover-hover"]').popover({
     html: true,
     trigger: 'hover',
     placement: 'top',
-    content: function () { return 'Hello World!'; }
+    content: function () { return ("Hello world!"); }
 });
