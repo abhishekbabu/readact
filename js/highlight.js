@@ -4,13 +4,6 @@ var elements = document.querySelectorAll(
     "h1, h2, h3, h4, h5, h6, p, li, td, caption, span, div, a, body, ul, strong, em, table, form, i, b"
 );
 
-function highlightAll(keywords) { // TODO: UNDO HARDCODING
-    for (let keyword in keywords) {
-        highlight(keyword, keywords[keyword]);
-        console.log(keyword);
-    }
-}
-
 function highlight(keywords) {
     elements.forEach((element) => {
         element.childNodes.forEach((child, index) => {
