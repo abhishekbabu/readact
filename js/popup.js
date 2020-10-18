@@ -122,7 +122,7 @@ function bias(article) {
         body: data
     })
     .then(response => response.text())
-    .then((response) => console.log(response))
+    .then((response) => drawLine(response))
     .catch(error => console.error(error));
 }
 
@@ -156,22 +156,6 @@ function onWindowLoad() {
 
 window.onload = onWindowLoad;
 
-// // Highlighting
-
-// function highlightKeywords() {
-//     chrome.tabs.executeScript(null, {
-//         file: "js/highlight.js"
-//     }, function() {
-//         // If you try and inject into an extensions page or the webstore/NTP you'll get an error
-//         if (chrome.runtime.lastError) {
-//             console.log('There was an error injecting script : \n' + chrome.runtime.lastError.message);
-//         }
-//     });
-
-// }
-
-// highlightKeywords();
-
 // Create the bias scale
 document.addEventListener('DOMContentLoaded', function() {
     var colorA = "blue", colorB = "red";
@@ -202,6 +186,21 @@ function drawScale(id, interpolator) {
                 return 6;
             }
             return Math.floor(xScale(d+1)) - Math.floor(xScale(d)) + 1;
-         })
+            })
         .attr("fill", (d) => cScale(d));
-  }
+}
+
+function drawLine(response) {
+    var svg = d3.select("#seq1");
+    svg.append('line')
+    .style("stroke", "white")
+    .style("stroke-width", 2)
+    .attr("x1", (468.0 * ((parseFloat(response) + 42.0) / 84.0)))
+    .attr("y1", 0)
+    .attr("x2", (468.0 * ((parseFloat(response) + 42.0) / 84.0)))
+    .attr("y2", 200);
+
+    console.log(response);
+    console.log((response + 42.0) / 84.0);
+    console.log(response + 42.0);
+}
