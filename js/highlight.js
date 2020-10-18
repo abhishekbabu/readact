@@ -11,9 +11,10 @@ function highlight(keywords) {
                 if (child.textContent) {
                     let text = child.textContent;
                     for (let key in keywords) {
+                        let content = getHTMLContent(key, keywords[key]);
                         text = text.replace(
                             key,
-                            "<span style=\"background-color: paleGreen;\" data-toggle=\"popover-hover\" title=\"" + key + "\" data-content=\"" + keywords[key] + "\">" + key + "</span>"
+                            "<span style=\"background-color: paleGreen;\" data-toggle=\"popover-hover\" data-html=\"true\" title=\"" + key + "\" data-content=\"" + content + "\">" + key + "</span>"
                         );
                         // "<span style=\"background-color: dodgerBlue;\" data-toggle=\"popover-hover\" title=\"" + key + "\" data-content=\"" + keywords[key] + "\">" + key + "</span>"
                     }
@@ -26,10 +27,27 @@ function highlight(keywords) {
     });
 }
 
+function getHTMLContent(key, value) {
+    if (value[0] == "candidate") {
+        return (
+            value[1] + "<div>" + value[2] + " " + value[3] + "</div>" + "<div>Candidate for District " + value[4] + "</div><div>" + value[5] + "</div><div>" + value[6] + "</div>"
+        )
+    } else if (value[0] == "measure") {
+        return (
+            value[1]
+        )
+    } else if (value[0] == "org") {
+        return (
+            value[1]
+        )
+    }
+}
+
 highlight({
-    "Tana": "<img src='https://housedemocrats.wa.gov/tmp/2013/11/tanasenn.jpg' />",
-    "coronavirus": "Dealy diseadse", 
-    "public health": "Real bad",
+    "Tana": ["candidate", "<img src='https://housedemocrats.wa.gov/tmp/2013/11/tanasenn.jpg' />", "Washington", "Representative", "41", "Democratic Party", "https://www.electtanasenn.org/"],
+    "coronavirus": ["measure", "Dealy diseadse"], 
+    "public health": ["measure", "Real bad"],
+    "Black Lives Matter": ["org", "https://en.wikipedia.org/wiki/Black_Lives_Matter"],
 });
 
 $('[data-toggle="popover-hover"]').popover({
