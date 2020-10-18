@@ -14,8 +14,48 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
         plainText = plainText.replace(/[\u2000-\u206F\u2E00-\u2E7F\\'©!"#$%&()*+\-\/:;<=>?@\[\]^_`{|}~]/g, ' ');
         plainText = plainText.replace(/\s+/g,' ').trim();
         console.log(plainText);
+        var body = JSON.stringify(
+            {
+                "documents": [
+                    {
+                        "language": "en",
+                        "id": "1",
+                        "text": plainText
+                    }
+                ]
+            }
+        );
+        textAnalytics(body);
     }
 });
+
+function textAnalytics(body) {
+    $(function() {
+        var params = {
+            // Request parameters
+            "showStats": true,
+        };
+      
+        $.ajax({
+            url: "https://westus2.api.cognitive.microsoft.com/text/analytics/v2.1/keyPhrases?" + $.param(params),
+            beforeSend: function(xhrObj){
+                // Request headers
+                xhrObj.setRequestHeader("Content-Type","application/json");
+                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","***REMOVED***");
+            },
+            type: "POST",
+            // Request body
+            data: body,
+        })
+        .done(function(data) {
+            alert("success");
+            console.log(data);
+        })
+        .fail(function() {
+            alert("error");
+        });
+    });
+}
 
 function onWindowLoad() {
     chrome.tabs.executeScript(null, {
