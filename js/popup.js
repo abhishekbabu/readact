@@ -9,25 +9,50 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
         while (SCRIPT_REGEX.test(bodyHtml)) {
             bodyHtml = bodyHtml.replace(SCRIPT_REGEX, " ");
         }
+        var STYLE_REGEX = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
+        while (STYLE_REGEX.test(bodyHtml)) {
+            bodyHtml = bodyHtml.replace(STYLE_REGEX, " ");
+        }
         bodyHTML = bodyHtml.replace(/(?:https?|ftp):\/\/[\n\S]+/g, ' ');
         let plainText = bodyHtml.replace(/<[^>]+>/g, ' ');
-        plainText = plainText.replace(/[\u2000-\u206F\u2E00-\u2E7F\\'©!"#$%&()*+\-\/:;<=>?@\[\]^_`{|}~]/g, ' ');
-        plainText = plainText.replace(/\s+/g,' ').trim();
-        console.log(plainText);
-        var body = JSON.stringify(
-            {
-                "documents": [
-                    {
-                        "language": "en",
-                        "id": "1",
-                        "text": plainText
-                    }
-                ]
-            }
-        );
+        plainText = plainText.replace("&nbsp;", ' ');
+        plainText = plainText.replace(/[\u2000-\u206F\u2E00-\u2E7F\\©!"#$%&()*+\-\/:;<=>?@\[\]^_`{|}~]/g, ' ');
+        plainText = plainText.replace(/\s+/g, ' ').trim();
+
+        var docs = splitIntoDocs(plainText);
+        var input = {};
+        var documents = [];
+        for (var i = 1; i <= Object.keys(docs).length; i++) {
+            var document = {};
+            document["language"] = "en";
+            document["id"] = i.toString();
+            document["text"] = docs[i];
+            documents.push(document);
+        }
+        input["documents"] = documents;
+        var body = JSON.stringify(input);
+        console.log(body)
         textAnalytics(body);
     }
 });
+
+function splitIntoDocs(text) {
+    var numDocs = text.length / 5120;
+    var docs = {};
+    for (var i = 1; i <= numDocs; i++) {
+        var splitIndex = -1;
+        for (var j = (i * 5120) - 1; j >= (i - 1) * 5120; j--) {
+            if (text.charAt(j) === ' ') {
+                splitIndex = j;
+                break;
+            }
+        }
+        if (splitIndex != -1) {
+            docs[i] = text.substring((i - 1) * 5120, splitIndex);
+        }
+    }
+    return docs;
+}
 
 function textAnalytics(body) {
     $(function() {
@@ -37,7 +62,7 @@ function textAnalytics(body) {
         };
       
         $.ajax({
-            url: "https://westus2.api.cognitive.microsoft.com/text/analytics/v2.1/keyPhrases?" + $.param(params),
+            url: "https://westus2.api.cognitive.microsoft.com/text/analytics/v2.1/entities?" + $.param(params),
             beforeSend: function(xhrObj){
                 // Request headers
                 xhrObj.setRequestHeader("Content-Type","application/json");
