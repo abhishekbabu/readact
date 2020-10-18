@@ -36,10 +36,6 @@ function getHTMLContent(key, value) {
         return (
             value[1]
         )
-    } else if (value[0] == "org") {
-        return (
-            value[1]
-        )
     }
 }
 

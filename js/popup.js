@@ -81,7 +81,7 @@ function textAnalytics(body) {
             beforeSend: function(xhrObj){
                 // Request headers
                 xhrObj.setRequestHeader("Content-Type","application/json");
-                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","***REMOVED***");
+                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","a581fc99482c42b9b1395425fcde4e37");
             },
             type: "POST",
             // Request body
@@ -230,17 +230,11 @@ function candidate_search(candidates, voter_id, actualMatches){
                         });
                     });
 
-
-
-
-                    console.log(JSON.stringify(highlights));
-                    console.log("AHHHH");
                     chrome.storage.sync.set({
                         "highlightInfo": highlights
                     }, function () {
                         console.log(JSON.stringify(highlights));
                         chrome.storage.sync.get("highlightInfo", function(data) {
-                            console.log(data.highlightInfo)
                         });
                         chrome.tabs.executeScript(null, {
                             file: "js/highlight.js"
