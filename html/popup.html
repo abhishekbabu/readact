@@ -13,41 +13,55 @@
   </head>
 
   <body style="width: 500px; height: 500px;">
-    <header style="font-size: x-large;" class="container-fluid"><img src="../img/logo.png" style="width: 36px; height: 36px; margin-right: 25px;">ReadAct</header>
-
-    <ul class="nav">
-        <li class="nav-item">
-            <a class="nav-link active" href="#">Article Summary</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#">Polling Locations</a>
-        </li>
-    </ul>
-
-    <div class="px-3">
-        <div>
-            <p style="font-size: small; font-weight: bold;" class="mb-0">Article Political Bias</p>
+    <div class="header-container">
+        <header style="font-size: x-large;" class="container-fluid"><img src="../img/logo.png" style="width: 36px; height: 36px; margin-right: 25px;">ReadAct</header>
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">Article Summary</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Polling Locations</a>
+            </li>
+        </ul>
+        <div class="p-3">
+            <div>
+                <p style="font-weight: 500;" class="mb-0">Article Political Bias</p>
+            </div>
+            <div style="max-height: 20px;" class="d-flex justify-content-between">
+                <p style="font-size: small;">Liberal</p>
+                <p style="font-size: small;">Conservative</p>
+            </div>
+            <svg id="seq1" width="468" height="40" ></svg>
         </div>
-    
-        <div style="max-height: 20px;" class="d-flex justify-content-between">
-            <p style="font-size: small;">Liberal</p>
-            <p style="font-size: small;">Conservative</p>
-        </div>
-        
-        <svg id="seq1" width="468" height="40" ></svg>
-    
+    </div>
+
+    <div style="padding-top: 220px;">
         <div id="term-candidate">
-            <div id="example-term" class="py-2 border-top border-black">
+            <div id="example-term" class="p-3 term">
                 <div class="d-flex">
-                    <p class="mb-0">[Term] </p>
-                    <p class="mb-0">political topic</p>
+                    <p class="mb-0 main-term">[Term] </p>
+                    <p class="mb-0" style="font-size: small; font-weight: 300;">&emsp;political topic</p>
                 </div>
                 <p class="mb-0">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam aliquet dolor id mi accumsan, ac efficitur tortor tincidunt. Suspendisse pulvinar nisi nisi.</p>
             </div>
-            <div id="example-candidate">
-                <div class="d-flex" class="py-2 border-top border-black">
-                    <p class="mb-0">[Candidate] </p>
-                    <p class="mb-0">political candidate</p>
+            <div id="example-candidate" class="p-3 term">
+                <div class="d-flex">
+                    <p class="mb-0 main-term">[Candidate] </p>
+                    <p class="mb-0" style="font-size: small; font-weight: 300;">&emsp;political candidate</p>
+                </div>
+                <p class="mb-0">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam aliquet dolor id mi accumsan, ac efficitur tortor tincidunt. Suspendisse pulvinar nisi nisi.</p>
+            </div>
+            <div id="example-candidate" class="p-3 term">
+                <div class="d-flex">
+                    <p class="mb-0 main-term">[Candidate] </p>
+                    <p class="mb-0" style="font-size: small; font-weight: 300;">&emsp;political candidate</p>
+                </div>
+                <p class="mb-0">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam aliquet dolor id mi accumsan, ac efficitur tortor tincidunt. Suspendisse pulvinar nisi nisi.</p>
+            </div>
+            <div id="example-candidate" class="p-3 term">
+                <div class="d-flex">
+                    <p class="mb-0 main-term">[Candidate] </p>
+                    <p class="mb-0" style="font-size: small; font-weight: 300;">&emsp;political candidate</p>
                 </div>
                 <p class="mb-0">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam aliquet dolor id mi accumsan, ac efficitur tortor tincidunt. Suspendisse pulvinar nisi nisi.</p>
             </div>
