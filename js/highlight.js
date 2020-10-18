@@ -45,7 +45,7 @@ function getHTMLContent(key, value) {
 
 /* highlight({
     "Tana": ["candidate", "<img src='https://housedemocrats.wa.gov/tmp/2013/11/tanasenn.jpg' />", "Washington", "Representative", "41", "Democratic Party", "https://www.electtanasenn.org/"],
-    "coronavirus": ["measure", "Dealy diseadse"], 
+    "coronavirus": ["measure", "Dealy diseadse"],
     "public health": ["measure", "Real bad"],
     "Black Lives Matter": ["org", "https://en.wikipedia.org/wiki/Black_Lives_Matter"],
 }); */
@@ -57,9 +57,10 @@ chrome.storage.sync.get('highlightInfo', function (items) {
     chrome.storage.local.remove('highlightInfo');
 });
 
-$('[data-toggle="popover-hover"]').popover({
-    html: true,
-    trigger: 'hover',
-    placement: 'top',
-    content: function () { return ("Hello world!"); }
-});
+$(function () {
+  $('[data-toggle="popover-hover"]').popover({
+      html: true,
+      trigger: 'hover',
+      placement: 'top'
+  });
+})

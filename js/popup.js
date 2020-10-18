@@ -89,6 +89,7 @@ function textAnalytics(body) {
         })
         .done(function(data) {
             parseResults(data);
+            parseResultsMeasure(data);
         })
         .fail(function() {
             alert("error");
@@ -137,9 +138,34 @@ function parseResults(results) {
     }
 }
 
+function parseResultsMeasure(results) {
+    // console.log(results);
+    var entities = results["documents"][0]["entities"];
+
+    var usefulEntities = [];
+
+    for (var i = 0; i < entities.length; i++) {
+        var entity = entities[i];
+        if (entity["type"] === "Other") {
+            usefulEntities.push(entity);
+        }
+    }
+
+    // console.log(usefulEntities);
+    for(var j = 0; j < usefulEntities.length; j++){
+        var measure = usefulEntities[j];
+        var name = measure["name"];
+        var actualMatches = [];
+        for (var k = 0; k < measure["matches"].length; k++) {
+            actualMatches.push(measure["matches"][k]["text"]);
+        }
+        itemMeasure(name, actualMatches);
+    }
+}
+
 function item(candidate, actualMatches){
   var id = "BpMZ1s0iLLUyBnJiqF978sbNUBgUGMna3MNyBOm3qzkInkH2OubPkdUd5f7xip3UscHR54MzqcrB00D9S5RzJbap";
-    
+
     $(function() {
         $.get("https://api.wevoteusa.org/apis/v1/searchAll", {
             text_from_search_field: candidate,
@@ -153,6 +179,23 @@ function item(candidate, actualMatches){
         });
     });
 }
+
+function itemMeasure(measure, actualMatches){
+    var id = "BpMZ1s0iLLUyBnJiqF978sbNUBgUGMna3MNyBOm3qzkInkH2OubPkdUd5f7xip3UscHR54MzqcrB00D9S5RzJbap";
+
+      $(function() {
+          $.get("https://api.wevoteusa.org/apis/v1/searchAll", {
+              text_from_search_field: measure,
+              voter_device_id: id,
+          })
+          .done(function(data) {
+              measure_search(data, id, actualMatches);
+          })
+          .fail(function() {
+              alert("error");
+          });
+      });
+  }
 
 var highlights = {};
 
@@ -186,10 +229,10 @@ function candidate_search(candidates, voter_id, actualMatches){
                             });
                         });
                     });
-                    
-                    
-                    
-                    
+
+
+
+
                     console.log(JSON.stringify(highlights));
                     console.log("AHHHH");
                     chrome.storage.sync.set({
@@ -208,7 +251,33 @@ function candidate_search(candidates, voter_id, actualMatches){
                     alert("error");
                 });
             });
-        }   
+        }
+    }
+}
+
+function measure_search(measures, voter_id, actualMatches){
+    if (measures["search_results"].length > 0) {
+        var i = 0;
+        while(i < measures["search_results"].length && measures["search_results"][i]["kind_of_owner"] !== "MEASURE"){
+            i++;
+        }
+        if (i >= 0 && i < measures["search_results"].length) {
+            measure_id = measures["search_results"][i]["we_vote_id"];
+            console.log(measure_id);
+            $(function() {
+                $.get("https://api.wevoteusa.org/apis/v1/measureRetrieve", {
+                    measure_we_vote_id: measure_id,
+                    voter_device_id: voter_id
+                })
+                .done(function(data) {
+                    addMeasureToHighlights(actualMatches, data);
+                })
+                .fail(function() {
+                    alert("error");
+                });
+            });
+        }
+
     }
 }
 
@@ -253,6 +322,35 @@ function addCandidateToHighlights(actualMatches, data) {
         }
         highlights[match].push(data["candidate_url"])
         console.log(JSON.stringify(highlights));
+    }
+    displayKeywords(highlights);
+}
+
+function addMeasureToHighlights(actualMatches, data) {
+    console.log(data);
+    for (var i = 0; i < actualMatches.length; i++) {
+        match = actualMatches[i];
+        highlights[match] = ["measure"];
+        // if (data["ballot_item_display_name"] != null) {
+        //     highlights[data["ballot_item_display_name"]].push(data["ballot_item_display_name"]);
+        // } else {
+        //     highlights[data["ballot_item_display_name"]].push("");
+        // }
+        if (highlights[match] != null) {
+            highlights[match].push(data["ballot_item_display_name"]);
+        } else {
+            highlights[match].push("");
+        }
+        if (highlights[match] != null) {
+            highlights[match].push(data["measure_text"]);
+        } else {
+            highlights[match].push("");
+        }
+        if (highlights[match] != null) {
+            highlights[match].push(data["measure_url"]);
+        } else {
+            highlights[match].push("");
+        }
     }
     displayKeywords(highlights);
 }
@@ -358,10 +456,10 @@ function displayKeywords(keywords) {
         } else if (value[0] == "measure") {
             newHTML +=  '<div class="p-3 term">' +
                             '<div class="d-flex">' +
-                                '<p class="mb-0 main-term">' + key + '</p>' +
+                                '<p class="mb-0 main-term">' + value[1] + '</p>' +
                                 '<p class="mb-0 style="font-size: small; font-weight: 300;">&emsp;political measure</p>' +
                             '</div>' +
-                            '<p class="mb-0">' + value[1] + '</p>' +
+                            '<p class="mb-0">' + value[2] + '</p>' +
                         '</div>';
         }
     }
