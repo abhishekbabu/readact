@@ -21,7 +21,7 @@ function highlight(keyword) {
                     let text = child.textContent;
                     text = text.replace(
                         regex,
-                        <span class="highlighted">${keyword}</span>
+                        <span class="highlighted" data-toggle="popover-click">${keyword}</span>
                     );
                     const newChild = document.createElement("span");
                     newChild.innerHTML = text;
@@ -31,3 +31,10 @@ function highlight(keyword) {
         })
     });
 }
+
+$('[data-toggle="popover-click"]').popover({
+      html: true,
+      trigger: 'click',
+      placement: 'top',
+      content: function () { return 'Hello World!'; }
+});

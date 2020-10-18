@@ -1,28 +1,3 @@
 .highlight {
-    background-color: yellow;
-}
-
-.highlight-information {
-    position: fixed;
-    padding-bottom: 10px;
-}
-
-.highlight-information-container {
-    position: relative;
-    z-index: 10000;
-    box-shadow: 0 4px 4px rgb(0 0 0 0.25);
-}
-
-.highlight-information-title {
-    font-family: 'Quicksand', sans-serif;
-    font-size: 14px;
-    padding: 5.5px;
-    color: #ffffff;
-    background-color: #002868;
-}
-
-.highlight-information-content {
-    font-family: 'Quicksand', sans-serif;
-    font-size: 12px;
-    padding: 15px;
+    background-color: dodgerBlue;
 }
