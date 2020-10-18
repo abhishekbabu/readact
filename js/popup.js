@@ -1,18 +1,6 @@
 // Parsing page HTML
 var documentHTML;
 
-chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function() {
-    chrome.tabs.executeScript(null, { file: "js/highlight.js" });
-});
-
-chrome.tabs.executeScript(null, { file: "js/popper.min.js" }, function() {
-    chrome.tabs.executeScript(null, { file: "js/highlight.js" });
-});
-
-chrome.tabs.executeScript(null, { file: "js/bootstrap.min.js" }, function() {
-    chrome.tabs.executeScript(null, { file: "js/highlight.js" });
-});
-
 chrome.runtime.onMessage.addListener(function(request, sender) {
     if (request.action == "getSource") {
         documentHTML = request.source;
@@ -59,12 +47,6 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
         }
         bias(plainText);
         textAnalytics(body);
-        for(person in textAnalytics){
-          item(person);
-          //Not do shit if it's not a candidate
-          //Fetch all candidate info
-          //Put it in a returnable area
-        }
     }
 });
 
@@ -116,13 +98,13 @@ function textAnalytics(body) {
 }
 
 function bias(article) {
-  apikey = "gAAAAABeVpQJKRM5BqPX91XW2AKfz8pJosk182maAweJcm5ORAkkBFj__d2feG4H5KIeOKFyhUVSY_uGImiaSBCwy2L6nWxx4g=="
+    apikey = "gAAAAABeVpQJKRM5BqPX91XW2AKfz8pJosk182maAweJcm5ORAkkBFj__d2feG4H5KIeOKFyhUVSY_uGImiaSBCwy2L6nWxx4g=="
 
-  const data = new URLSearchParams();
-  data.append("API", apikey);
-  data.append("Text", article);
+    const data = new URLSearchParams();
+    data.append("API", apikey);
+    data.append("Text", article);
 
-  fetch('https://api.thebipartisanpress.com/api/endpoints/beta/robert', {
+    fetch('https://api.thebipartisanpress.com/api/endpoints/beta/robert', {
         method: 'POST',
         body: data
     })
@@ -133,68 +115,104 @@ function bias(article) {
 
 function parseResults(results) {
     var entities = results["documents"][0]["entities"];
-    console.log(entities);
 
     var usefulEntities = [];
 
     for (var i = 0; i < entities.length; i++) {
         var entity = entities[i];
-        if (entity["type"] === "Other" || entity["type"] === "Person" || entity["type"] === "Organization") {
+        if (entity["type"] === "Person") {
             usefulEntities.push(entity);
         }
     }
 
     console.log(usefulEntities);
+    for(var j = 0; j < usefulEntities.length; j++){
+        var person = usefulEntities[j];
+        var name = person["name"];
+        var actualMatches = [];
+        for (var k = 0; k < person["matches"].length; k++) {
+            actualMatches.push(person["matches"][k]["text"]);
+        }
+        item(name, actualMatches);
+    }
 }
 
-// function voter_id(search) {
-//   console.log(search);
-//   fetch('https://api.wevoteusa.org/apis/v1/deviceIdGenerate', {
-//         method: 'GET'
-//     })
-//     .then(response => response.text())
-//     .then((response) => item(response, search))
-//     .catch(error => console.error(error));
-// }
-
-function item(candidate){
+function item(candidate, actualMatches){
   var id = "BpMZ1s0iLLUyBnJiqF978sbNUBgUGMna3MNyBOm3qzkInkH2OubPkdUd5f7xip3UscHR54MzqcrB00D9S5RzJbap";
 
-  $(function() {
-      $.get("https://api.wevoteusa.org/apis/v1/searchAll", {
-        text_from_search_field: candidate,
-        voter_device_id: id
-      })
-      .done(function(data) {
-          candidate_search(data, id);
-      })
-      .fail(function() {
-          alert("error");
-      });
-  });
-}
-
-function candidate_search(candidates, voter_id){
-    var i = 0;
-    while(candidates["search_results"][i]["kind_of_owner"] !== "CANDIDATE" && i < candidates["search_results"].length){
-      i++;
-    }
-    candidate_id = candidates["search_results"][i]["we_vote_id"];
-
     $(function() {
-        $.get("https://api.wevoteusa.org/apis/v1/candidateRetrieve", {
-          candidate_we_vote_id: candidate_id,
-          voter_device_id: voter_id
+        $.get("https://api.wevoteusa.org/apis/v1/searchAll", {
+            text_from_search_field: candidate,
+            voter_device_id: id
         })
         .done(function(data) {
-            console.log(data);
+            candidate_search(data, id, actualMatches);
         })
         .fail(function() {
             alert("error");
         });
     });
+}
 
-    //collect
+function candidate_search(candidates, voter_id, actualMatches){
+    if (candidates["search_results"].length > 0) {
+        var i = 0;
+        while(i < candidates["search_results"].length && candidates["search_results"][i]["kind_of_owner"] !== "CANDIDATE"){
+            i++;
+        }
+        if (i >= 0 && i < candidates["search_results"].length) {
+            candidate_id = candidates["search_results"][i]["we_vote_id"];
+
+            $(function() {
+                $.get("https://api.wevoteusa.org/apis/v1/candidateRetrieve", {
+                    candidate_we_vote_id: candidate_id,
+                    voter_device_id: voter_id
+                })
+                .done(function(data) {
+                    addCandidateToHighlights(actualMatches, data);
+                })
+                .fail(function() {
+                    alert("error");
+                });
+            });
+        }
+        
+    }
+}
+
+var highlights = {};
+
+function addCandidateToHighlights(actualMatches, data) {
+    for (var i = 0; i < actualMatches.length; i++) {
+        match = actualMatches[i];
+        highlights[match] = ["candidate"];
+        if (data["candidate_photo_url_large"] != null) {
+            highlights[match].push("<img src=\"" + data["candidate_photo_url_large"] + "\" />");
+        } else if (data["candidate_photo_url_medium"] != null) {
+            highlights[match].push("<img src=\"" + data["candidate_photo_url_medium"] + "\" />");
+        } else if (data["candidate_photo_url_tiny"] != null) {
+            highlights[match].push("<img src=\"" + data["candidate_photo_url_tiny"] + "\" />");
+        } else {
+            highlights[match].push("");
+        }
+        if (data["state_code"] != null) {
+            highlights[match].push(data["state_code"]);
+        } else {
+            highlights[match].push("");
+        }
+        if (data["contest_office_name"] != null) {
+            highlights[match].push(data["contest_office_name"]);
+        } else {
+            highlights[match].push("");
+        }
+        highlights[match].push("");
+        if (data["party"] != null) {
+            highlights[match].push(data["party"]);
+        } else {
+            highlights[match].push("");
+        }
+        highlights[match].push(data["candidate_url"])
+    }
 }
 
 function onWindowLoad() {
@@ -255,3 +273,21 @@ function drawLine(response) {
     .attr("x2", (468.0 * ((parseFloat(response) + 42.0) / 84.0)))
     .attr("y2", 200);
 }
+
+chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function() {
+    chrome.tabs.executeScript(null, { file: "js/popper.min.js" }, function() {
+        chrome.tabs.executeScript(null, { file: "js/bootstrap.min.js "});
+    });
+});
+
+console.log(highlights)
+chrome.storage.sync.set({
+    "highlightInfo": highlights
+}, function () {
+    chrome.storage.sync.get("highlightInfo", function(data) {
+        console.log(data.highlightInfo)
+    });
+    chrome.tabs.executeScript({
+        file: "js/highlight.js"
+    });
+});

@@ -50,6 +50,13 @@ highlight({
     "Black Lives Matter": ["org", "https://en.wikipedia.org/wiki/Black_Lives_Matter"],
 });
 
+// chrome.storage.sync.get('highlightInfo', function (items) {
+//     console.log(items);
+//     console.log(highlights)
+//     highlight(items.highlights);
+//     chrome.storage.local.remove('highlightInfo');
+// });
+
 $('[data-toggle="popover-hover"]').popover({
     html: true,
     trigger: 'hover',
