@@ -139,7 +139,7 @@ function parseResults(results) {
 
 function item(candidate, actualMatches){
   var id = "BpMZ1s0iLLUyBnJiqF978sbNUBgUGMna3MNyBOm3qzkInkH2OubPkdUd5f7xip3UscHR54MzqcrB00D9S5RzJbap";
-
+    
     $(function() {
         $.get("https://api.wevoteusa.org/apis/v1/searchAll", {
             text_from_search_field: candidate,
@@ -153,6 +153,8 @@ function item(candidate, actualMatches){
         });
     });
 }
+
+var highlights = {};
 
 function candidate_search(candidates, voter_id, actualMatches){
     if (candidates["search_results"].length > 0) {
@@ -170,28 +172,66 @@ function candidate_search(candidates, voter_id, actualMatches){
                 })
                 .done(function(data) {
                     addCandidateToHighlights(actualMatches, data);
+                    /* chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function() {
+                        chrome.tabs.executeScript(null, { file: "js/popper.min.js" }, function() {
+                            chrome.tabs.executeScript(null, { file: "js/bootstrap.min.js "});
+                        });
+                    }); */
+                    chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function() {
+                        //chrome.tabs.executeScript(null, { file: "js/highlight.js" });
+                        chrome.tabs.executeScript(null, { file: "js/popper.min.js" }, function() {
+                            //chrome.tabs.executeScript(null, { file: "js/highlight.js" });
+                            chrome.tabs.executeScript(null, { file: "js/bootstrap.min.js" }, function() {
+                                //chrome.tabs.executeScript(null, { file: "js/highlight.js" });
+                            });
+                        });
+                    });
+                    
+                    
+                    
+                    
+                    console.log(JSON.stringify(highlights));
+                    console.log("AHHHH");
+                    chrome.storage.sync.set({
+                        "highlightInfo": highlights
+                    }, function () {
+                        console.log(JSON.stringify(highlights));
+                        chrome.storage.sync.get("highlightInfo", function(data) {
+                            console.log(data.highlightInfo)
+                        });
+                        chrome.tabs.executeScript(null, {
+                            file: "js/highlight.js"
+                        });
+                    });
                 })
                 .fail(function() {
                     alert("error");
                 });
             });
-        }
-        
+        }   
     }
 }
-
-var highlights = {};
 
 function addCandidateToHighlights(actualMatches, data) {
     for (var i = 0; i < actualMatches.length; i++) {
         match = actualMatches[i];
+        containsSubstring = false;
+        for (let key in highlights) {
+            if (key.includes(match)) {
+                containsSubstring = true;
+            }
+        }
+        if (containsSubstring) {
+            continue;
+        }
+        console.log(match);
         highlights[match] = ["candidate"];
         if (data["candidate_photo_url_large"] != null) {
-            highlights[match].push("<img src=\"" + data["candidate_photo_url_large"] + "\" />");
+            highlights[match].push("<img src=\'" + data["candidate_photo_url_large"] + "\' />");
         } else if (data["candidate_photo_url_medium"] != null) {
-            highlights[match].push("<img src=\"" + data["candidate_photo_url_medium"] + "\" />");
+            highlights[match].push("<img src=\'" + data["candidate_photo_url_medium"] + "\' />");
         } else if (data["candidate_photo_url_tiny"] != null) {
-            highlights[match].push("<img src=\"" + data["candidate_photo_url_tiny"] + "\" />");
+            highlights[match].push("<img src=\'" + data["candidate_photo_url_tiny"] + "\' />");
         } else {
             highlights[match].push("");
         }
@@ -212,6 +252,7 @@ function addCandidateToHighlights(actualMatches, data) {
             highlights[match].push("");
         }
         highlights[match].push(data["candidate_url"])
+        console.log(JSON.stringify(highlights));
     }
     displayKeywords(highlights);
 }
@@ -275,11 +316,12 @@ function drawLine(response) {
     .attr("y2", 200);
 }
 
-chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function() {
+/*  chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function() {
     chrome.tabs.executeScript(null, { file: "js/popper.min.js" }, function() {
         chrome.tabs.executeScript(null, { file: "js/bootstrap.min.js "});
     });
-});
+}); */
+/*
 
 console.log(highlights)
 chrome.storage.sync.set({
@@ -292,6 +334,12 @@ chrome.storage.sync.set({
         file: "js/highlight.js"
     });
 });
+ */
+
+for (let key in highlights) {
+    console.log("cool");
+}
+
 
 function displayKeywords(keywords) {
     let newHTML = "";
@@ -305,7 +353,7 @@ function displayKeywords(keywords) {
                             '</div>' +
                             '<p class="mb-0">' + value[2] + ' ' + value[3] + '</p>' +
                             '<p class="mb-0">' + value[5] + '</p>' +
-                            '<a href=' + value[6] + 'class="mb-0">' + value[6] + '</a>' +
+                            '<a href=' + value[6] + ' target="_blank" class="mb-0">' + value[6] + '</a>' +
                         '</div>';
         } else if (value[0] == "measure") {
             newHTML +=  '<div class="p-3 term">' +
