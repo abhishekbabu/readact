@@ -9,10 +9,25 @@ header {
     font-weight: 500;
 }
 
+.header-container {
+    position: fixed; 
+    width: 100%; 
+    background-color: #FFFFFF; 
+    border-bottom: 1px solid #E5E5E5;
+}
+
 .nav {
     border-bottom: 1px solid #E5E5E5;
 }
 
 .nav-link {
     color: #000000;
+}
+
+.term {
+    border-bottom: 1px solid #E5E5E5;
+}
+
+.main-term {
+    font-weight: 500;
 }

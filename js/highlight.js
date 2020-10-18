@@ -13,8 +13,9 @@ function highlight(keywords) {
                     for (let key in keywords) {
                         text = text.replace(
                             key,
-                            "<span style=\"background-color: dodgerBlue;\" data-toggle=\"popover-click\" title=\"" + key + "\" data-content=\"" + keywords[key] + "\">" + key + "</span>"
+                            "<span style=\"background-color: paleGreen;\" data-toggle=\"popover-hover\" title=\"" + key + "\" data-content=\"" + keywords[key] + "\">" + key + "</span>"
                         );
+                        // "<span style=\"background-color: dodgerBlue;\" data-toggle=\"popover-hover\" title=\"" + key + "\" data-content=\"" + keywords[key] + "\">" + key + "</span>"
                     }
                     const newChild = document.createElement("span");
                     newChild.innerHTML = text;
@@ -31,9 +32,9 @@ highlight({
     "public health": "Real bad",
 });
 
-$('[data-toggle="popover-click"]').popover({
+$('[data-toggle="popover-hover"]').popover({
     html: true,
-    trigger: 'click',
+    trigger: 'hover',
     placement: 'top',
-    content: function () { return 'Hello World!'; }
+    content: function () { return ("Hello world!"); }
 });
