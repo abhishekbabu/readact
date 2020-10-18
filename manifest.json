@@ -11,7 +11,7 @@
     "scripts": ["js/background.js"],
     "persistent": false
   },
-  "permissions": ["alarms", "storage"],
+  "permissions": ["alarms", "storage", "tabs", "<all_urls>"],
   "browser_action": {
     "default_popup": "html/popup.html"
   },
