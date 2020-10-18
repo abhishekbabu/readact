@@ -31,19 +31,32 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
         plainText = plainText.replace(/[\u2000-\u206F\u2E00-\u2E7F\\©!"#$%&()*+\-\/:;<=>?@\[\]^_`{|}~]/g, ' ');
         plainText = plainText.replace(/\s+/g, ' ').trim();
 
-        var docs = splitIntoDocs(plainText);
-        var input = {};
-        var documents = [];
-        for (var i = 1; i <= Object.keys(docs).length; i++) {
-            var document = {};
-            document["language"] = "en";
-            document["id"] = i.toString();
-            document["text"] = docs[i];
-            documents.push(document);
+        var body;
+
+        if (plainText.length > 5120) {
+            var docs = splitIntoDocs(plainText);
+            var input = {};
+            var documents = [];
+            for (var i = 1; i <= Object.keys(docs).length; i++) {
+                var document = {};
+                document["language"] = "en";
+                document["id"] = i.toString();
+                document["text"] = docs[i];
+                documents.push(document);
+            }
+            input["documents"] = documents;
+            body = JSON.stringify(input);
+        } else {
+            body = JSON.stringify({
+                "documents": [
+                    {
+                        "language": "en",
+                        "id": "1",
+                        "text": plainText
+                    }
+                ]
+            })
         }
-        input["documents"] = documents;
-        var body = JSON.stringify(input);
-        console.log(body)
         textAnalytics(body);
     }
 });
@@ -67,6 +80,7 @@ function splitIntoDocs(text) {
 }
 
 function textAnalytics(body) {
+
     $(function() {
         var params = {
             // Request parameters
@@ -86,12 +100,29 @@ function textAnalytics(body) {
         })
         .done(function(data) {
             alert("success");
-            console.log(data);
+            parseResults(data);
         })
         .fail(function() {
             alert("error");
         });
     });
+
+}
+
+function parseResults(results) {
+    var entities = results["documents"][0]["entities"];
+    console.log(entities);
+
+    var usefulEntities = [];
+
+    for (var i = 0; i < entities.length; i++) {
+        var entity = entities[i];
+        if (entity["type"] === "Other" || entity["type"] === "Person" || entity["type"] === "Organization") {
+            usefulEntities.push(entity);
+        }
+    }
+
+    console.log(usefulEntities);
 }
 
 function onWindowLoad() {
