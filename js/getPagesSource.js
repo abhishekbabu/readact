@@ -25,7 +25,6 @@ function DOMtoString(document_root) {
         }
         node = node.nextSibling;
     }
-    console.log("DOMToString");
     return html;
 }
 
