@@ -3,7 +3,7 @@
   "name": "Readaction",
   "version": "0.0.0.1",
 
-  "description": "Readaction processes news articles to identify political candidates, initiatives, and bias to motivate people to act on what they read!",
+  "description": "Readaction highlights political candidates, initiatives, and bias within news articles to motivate people to act on what they read!",
 
   "homepage_url": "https://github.com/abhishekbabu/ReadAct",
 
