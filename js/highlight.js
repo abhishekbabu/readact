@@ -25,13 +25,6 @@ function highlight(keywords) {
     });
 }
 
-/* highlight({
-    "Tana": ["candidate", "<img src='https://housedemocrats.wa.gov/tmp/2013/11/tanasenn.jpg' />", "Washington", "Representative", "41", "Democratic Party", "https://www.electtanasenn.org/"],
-    "coronavirus": ["measure", "Dealy diseadse"],
-    "public health": ["measure", "Real bad"],
-    "Black Lives Matter": ["org", "https://en.wikipedia.org/wiki/Black_Lives_Matter"],
-}); */
-
 chrome.storage.sync.get('highlightInfo', function (items) {
     console.log(items);
     highlight(items.highlightInfo);

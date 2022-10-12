@@ -9,6 +9,7 @@ $('#btn2').on("click",function() {
 var documentHTML;
 
 chrome.runtime.onMessage.addListener(function (request, sender) {
+    //Make page text interpretable by Azure
     if (request.action == "getSource") {
         documentHTML = request.source;
         var bodyHtml = /<body.*?>([\s\S]*)<\/body>/.exec(documentHTML)[1];
@@ -28,6 +29,7 @@ chrome.runtime.onMessage.addListener(function (request, sender) {
 
         var body;
 
+        //Split into smaller documents if too long
         if (plainText.length > 5120) {
             var docs = splitIntoDocs(plainText);
             var input = {};
@@ -52,11 +54,13 @@ chrome.runtime.onMessage.addListener(function (request, sender) {
                 ]
             })
         }
+        //Measure political bias and associate candidates/measures
         bias(plainText);
         textAnalytics(body);
     }
 });
 
+//Split into smaller documents
 function splitIntoDocs(text) {
     var numDocs = text.length / 5120;
     var docs = {};
@@ -75,8 +79,8 @@ function splitIntoDocs(text) {
     return docs;
 }
 
+//Parse for candidates and measures
 function textAnalytics(body) {
-
     $(function () {
         var params = {
             // Request parameters
@@ -105,6 +109,7 @@ function textAnalytics(body) {
 
 }
 
+//Measure political bias
 function bias(article) {
     apikey = "gAAAAABeVpQJKRM5BqPX91XW2AKfz8pJosk182maAweJcm5ORAkkBFj__d2feG4H5KIeOKFyhUVSY_uGImiaSBCwy2L6nWxx4g=="
 
@@ -123,6 +128,7 @@ function bias(article) {
 
 var candidates = {};
 
+//Parse out candidates from Azure
 function parseResultsCandidate(results) {
     var entities = results["documents"][0]["entities"];
 
@@ -146,6 +152,7 @@ function parseResultsCandidate(results) {
     itemCandidate(candidates);
 }
 
+//Parse out measures from Azure
 function parseResultsMeasure(results) {
     var entities = results["documents"][0]["entities"];
 
@@ -169,6 +176,7 @@ function parseResultsMeasure(results) {
     }
 }
 
+//Find candidate ballot
 function itemCandidate(candidates) {
     var id = "KwR5TWQ95ST7ZPqoaQzanSKj3pT7Eg4cEi3MDYTZSgi1XuJFrMHjxm3JzxPAg1E6G4nbPtwYf36wnbrqetQ47WCi";
 
@@ -183,6 +191,7 @@ function itemCandidate(candidates) {
     });
 }
 
+//Find measure ballot
 function itemMeasure(measure, actualMatches) {
     var id = "KwR5TWQ95ST7ZPqoaQzanSKj3pT7Eg4cEi3MDYTZSgi1XuJFrMHjxm3JzxPAg1E6G4nbPtwYf36wnbrqetQ47WCi";
 
@@ -249,7 +258,6 @@ function get_related_measures(measure, elections, id, actualMatches) {
         get_measures_from_election(measure, id, elections["election_list"][i]["state_code"], elections["election_list"][i]["google_civic_election_id"], actualMatches);
     }
 }
-
 
 function measure_search(measures, voter_id, actualMatches) {
     if (measures["ballot_item_list"].length > 0) {
@@ -324,7 +332,6 @@ function addCandidateToHighlights(actualMatches, data) {
             highlights[match].push("");
         }
         highlights[match].push(data["candidate_url"])
-        //console.log(JSON.stringify(highlights));
     }
     displayKeywords(highlights);
 }
@@ -351,7 +358,6 @@ function addMeasureToHighlights(actualMatches, data) {
         }
         highlights[match].push(match["text"]);
     }
-    console.log(JSON.stringify(highlights));
     displayKeywords(highlights);
 }
 
