@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
-  "name": "ReadAct",
+  "name": "Readaction",
   "version": "1.0",
 
-  "description": "ReadAct processes new articles to identify political candidates, initiatives, and bias to motivate people to act on what they read!",
+  "description": "Readaction processes new articles to identify political candidates, initiatives, and bias to motivate people to act on what they read!",
 
   "homepage_url": "https://github.com/abhishekbabu/ReadAct",
 

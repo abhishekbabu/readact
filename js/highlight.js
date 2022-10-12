@@ -11,12 +11,10 @@ function highlight(keywords) {
                 if (child.textContent) {
                     let text = child.textContent;
                     for (let key in keywords) {
-                        let content = getHTMLContent(key, keywords[key]);
                         text = text.replace(
                             key,
-                            "<span style=\"background-color: paleGreen;\" data-toggle=\"popover-hover\" data-html=\"true\" title=\"" + key + "\" data-content=\"" + content + "\">" + key + "</span>"
+                            "<span style=\"background-color: paleGreen;\">" + key + "</span>"
                         );
-                        // "<span style=\"background-color: dodgerBlue;\" data-toggle=\"popover-hover\" title=\"" + key + "\" data-content=\"" + keywords[key] + "\">" + key + "</span>"
                     }
                     const newChild = document.createElement("span");
                     newChild.innerHTML = text;
@@ -25,18 +23,6 @@ function highlight(keywords) {
             }
         });
     });
-}
-
-function getHTMLContent(key, value) {
-    if (value[0] == "candidate") {
-        return (
-            value[1] + "<div>" + value[2] + " " + value[3] + "</div>" + "<div>Candidate for District " + value[4] + "</div><div>" + value[5] + "</div><div>" + value[6] + "</div>"
-        )
-    } else if (value[0] == "measure") {
-        return (
-            value[1]
-        )
-    }
 }
 
 /* highlight({
@@ -48,15 +34,6 @@ function getHTMLContent(key, value) {
 
 chrome.storage.sync.get('highlightInfo', function (items) {
     console.log(items);
-    //console.log(highlights)
     highlight(items.highlightInfo);
     chrome.storage.local.remove('highlightInfo');
 });
-
-$(function () {
-  $('[data-toggle="popover-hover"]').popover({
-      html: true,
-      trigger: 'hover',
-      placement: 'top'
-  });
-})

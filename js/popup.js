@@ -1,7 +1,14 @@
-// Parsing page HTML
+$('#btn1').on("click",function() {
+    chrome.tabs.create({url:"https://www.vote.org/polling-place-locator/"});
+});
+
+$('#btn2').on("click",function() {
+    chrome.tabs.create({url:"https://vote.gov/"});
+});
+
 var documentHTML;
 
-chrome.runtime.onMessage.addListener(function(request, sender) {
+chrome.runtime.onMessage.addListener(function (request, sender) {
     if (request.action == "getSource") {
         documentHTML = request.source;
         var bodyHtml = /<body.*?>([\s\S]*)<\/body>/.exec(documentHTML)[1];
@@ -70,7 +77,7 @@ function splitIntoDocs(text) {
 
 function textAnalytics(body) {
 
-    $(function() {
+    $(function () {
         var params = {
             // Request parameters
             "showStats": true,
@@ -78,22 +85,22 @@ function textAnalytics(body) {
 
         $.ajax({
             url: "https://westus2.api.cognitive.microsoft.com/text/analytics/v2.1/entities?" + $.param(params),
-            beforeSend: function(xhrObj){
+            beforeSend: function (xhrObj) {
                 // Request headers
-                xhrObj.setRequestHeader("Content-Type","application/json");
-                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","a581fc99482c42b9b1395425fcde4e37");
+                xhrObj.setRequestHeader("Content-Type", "application/json");
+                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key", "009a654e207843ea8a219d7f5733a5a1");
             },
             type: "POST",
             // Request body
             data: body,
         })
-        .done(function(data) {
-            parseResults(data);
-            parseResultsMeasure(data);
-        })
-        .fail(function() {
-            alert("error");
-        });
+            .done(function (data) {
+                parseResultsCandidate(data);
+                parseResultsMeasure(data);
+            })
+            .fail(function () {
+                alert("error");
+            });
     });
 
 }
@@ -109,12 +116,14 @@ function bias(article) {
         method: 'POST',
         body: data
     })
-    .then(response => response.text())
-    .then((response) => drawLine(response))
-    .catch(error => console.error(error));
+        .then(response => response.text())
+        .then((response) => drawLine(response))
+        .catch(error => console.error(error));
 }
 
-function parseResults(results) {
+var candidates = {};
+
+function parseResultsCandidate(results) {
     var entities = results["documents"][0]["entities"];
 
     var usefulEntities = [];
@@ -126,20 +135,18 @@ function parseResults(results) {
         }
     }
 
-    console.log(usefulEntities);
-    for(var j = 0; j < usefulEntities.length; j++){
+    for (var j = 0; j < usefulEntities.length; j++) {
         var person = usefulEntities[j];
         var name = person["name"];
-        var actualMatches = [];
+        candidates[name] = [];
         for (var k = 0; k < person["matches"].length; k++) {
-            actualMatches.push(person["matches"][k]["text"]);
+            candidates[name].push(person["matches"][k]["text"]);
         }
-        item(name, actualMatches);
     }
+    itemCandidate(candidates);
 }
 
 function parseResultsMeasure(results) {
-    // console.log(results);
     var entities = results["documents"][0]["entities"];
 
     var usefulEntities = [];
@@ -151,8 +158,7 @@ function parseResultsMeasure(results) {
         }
     }
 
-    // console.log(usefulEntities);
-    for(var j = 0; j < usefulEntities.length; j++){
+    for (var j = 0; j < usefulEntities.length; j++) {
         var measure = usefulEntities[j];
         var name = measure["name"];
         var actualMatches = [];
@@ -163,112 +169,116 @@ function parseResultsMeasure(results) {
     }
 }
 
-function item(candidate, actualMatches){
-  var id = "BpMZ1s0iLLUyBnJiqF978sbNUBgUGMna3MNyBOm3qzkInkH2OubPkdUd5f7xip3UscHR54MzqcrB00D9S5RzJbap";
+function itemCandidate(candidates) {
+    var id = "KwR5TWQ95ST7ZPqoaQzanSKj3pT7Eg4cEi3MDYTZSgi1XuJFrMHjxm3JzxPAg1E6G4nbPtwYf36wnbrqetQ47WCi";
 
-    $(function() {
-        $.get("https://api.wevoteusa.org/apis/v1/searchAll", {
-            text_from_search_field: candidate,
-            voter_device_id: id
-        })
-        .done(function(data) {
-            candidate_search(data, id, actualMatches);
-        })
-        .fail(function() {
-            alert("error");
-        });
+    $(function () {
+        $.get("https://api.wevoteusa.org/apis/v1/ballotItemHighlightsRetrieve")
+            .done(function (data) {
+                candidate_search(candidates, data, id);
+            })
+            .fail(function () {
+                alert("error in itemizing candidate");
+            });
     });
 }
 
-function itemMeasure(measure, actualMatches){
-    var id = "BpMZ1s0iLLUyBnJiqF978sbNUBgUGMna3MNyBOm3qzkInkH2OubPkdUd5f7xip3UscHR54MzqcrB00D9S5RzJbap";
+function itemMeasure(measure, actualMatches) {
+    var id = "KwR5TWQ95ST7ZPqoaQzanSKj3pT7Eg4cEi3MDYTZSgi1XuJFrMHjxm3JzxPAg1E6G4nbPtwYf36wnbrqetQ47WCi";
 
-      $(function() {
-          $.get("https://api.wevoteusa.org/apis/v1/searchAll", {
-              text_from_search_field: measure,
-              voter_device_id: id,
-          })
-          .done(function(data) {
-              measure_search(data, id, actualMatches);
-          })
-          .fail(function() {
-              alert("error");
-          });
-      });
-  }
+    $(function () {
+        $.get("https://api.wevoteusa.org/apis/v1/electionsRetrieve", {
+            voter_device_id: id
+        })
+            .done(function (data) {
+                get_related_measures(measure, data, id, actualMatches);
+            })
+            .fail(function () {
+                alert("error");
+            });
+    });
+}
 
 var highlights = {};
 
-function candidate_search(candidates, voter_id, actualMatches){
-    if (candidates["search_results"].length > 0) {
-        var i = 0;
-        while(i < candidates["search_results"].length && candidates["search_results"][i]["kind_of_owner"] !== "CANDIDATE"){
-            i++;
-        }
-        if (i >= 0 && i < candidates["search_results"].length) {
-            candidate_id = candidates["search_results"][i]["we_vote_id"];
-
-            $(function() {
-                $.get("https://api.wevoteusa.org/apis/v1/candidateRetrieve", {
-                    candidate_we_vote_id: candidate_id,
-                    voter_device_id: voter_id
-                })
-                .done(function(data) {
-                    addCandidateToHighlights(actualMatches, data);
-                    /* chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function() {
-                        chrome.tabs.executeScript(null, { file: "js/popper.min.js" }, function() {
-                            chrome.tabs.executeScript(null, { file: "js/bootstrap.min.js "});
-                        });
-                    }); */
-                    chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function() {
-                        //chrome.tabs.executeScript(null, { file: "js/highlight.js" });
-                        chrome.tabs.executeScript(null, { file: "js/popper.min.js" }, function() {
-                            //chrome.tabs.executeScript(null, { file: "js/highlight.js" });
-                            chrome.tabs.executeScript(null, { file: "js/bootstrap.min.js" }, function() {
-                                //chrome.tabs.executeScript(null, { file: "js/highlight.js" });
-                            });
-                        });
-                    });
-
-                    chrome.storage.sync.set({
-                        "highlightInfo": highlights
-                    }, function () {
-                        console.log(JSON.stringify(highlights));
-                        chrome.storage.sync.get("highlightInfo", function(data) {
-                        });
-                        chrome.tabs.executeScript(null, {
-                            file: "js/highlight.js"
-                        });
-                    });
-                })
-                .fail(function() {
-                    alert("error");
-                });
-            });
+function candidate_search(candidates, ballot, voter_id) {
+    for (i = 0; i < ballot["highlight_list"].length; i++) {
+        for (let key in candidates) {
+            if (ballot["highlight_list"][i]["name"] == key) {
+                    candidate_id = ballot["highlight_list"][i]["we_vote_id"];
+                    perCandidate(candidate_id, voter_id, candidates[key]);
+            }
         }
     }
 }
 
-function measure_search(measures, voter_id, actualMatches){
-    if (measures["search_results"].length > 0) {
+function perCandidate(candidate_id, voter_id, matches){
+    $(function () {
+        $.get("https://api.wevoteusa.org/apis/v1/candidateRetrieve", {
+            candidate_we_vote_id: candidate_id,
+            voter_device_id: voter_id
+        })
+            .done(function (data) {
+                addCandidateToHighlights(matches, data);
+                chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function () {
+                    chrome.tabs.executeScript(null, { file: "js/bootstrap.bundle.min.js" }, function () {
+                        chrome.storage.sync.set({
+                            "highlightInfo": highlights
+                        }, function () {
+                            chrome.tabs.executeScript(null, { file: "js/highlight.js" });
+                        })
+                    });
+                });
+            });
+    });
+}
+
+function get_measures_from_election(search_term, id, state, civic_id, actualMatches) {
+    $.get("https://api.wevoteusa.org/apis/v1/ballotItemOptionsRetrieve", {
+        voter_device_id: id,
+        search_string: search_term,
+        state_code: state,
+        google_civic_election_id: civic_id
+    }).done(function (data) {
+        measure_search(data, id, actualMatches)
+    })
+}
+
+function get_related_measures(measure, elections, id, actualMatches) {
+    for (i = 0; i < elections["election_list"].length; i++) {
+        get_measures_from_election(measure, id, elections["election_list"][i]["state_code"], elections["election_list"][i]["google_civic_election_id"], actualMatches);
+    }
+}
+
+
+function measure_search(measures, voter_id, actualMatches) {
+    if (measures["ballot_item_list"].length > 0) {
         var i = 0;
-        while(i < measures["search_results"].length && measures["search_results"][i]["kind_of_owner"] !== "MEASURE"){
+        while (i < measures["ballot_item_list"].length && measures["ballot_item_list"][i]["kind_of_ballot_item"] !== "MEASURE") {
             i++;
         }
-        if (i >= 0 && i < measures["search_results"].length) {
-            measure_id = measures["search_results"][i]["we_vote_id"];
-            console.log(measure_id);
-            $(function() {
+        if (i >= 0 && i < measures["ballot_item_list"].length) {
+            measure_id = measures["ballot_item_list"][i]["measure_we_vote_id"];
+            $(function () {
                 $.get("https://api.wevoteusa.org/apis/v1/measureRetrieve", {
                     measure_we_vote_id: measure_id,
                     voter_device_id: voter_id
                 })
-                .done(function(data) {
-                    addMeasureToHighlights(actualMatches, data);
-                })
-                .fail(function() {
-                    alert("error");
-                });
+                    .done(function (data) {
+                        addMeasureToHighlights(actualMatches, data);
+                        chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function () {
+                            chrome.tabs.executeScript(null, { file: "js/bootstrap.bundle.min.js" }, function () {
+                                chrome.storage.sync.set({
+                                    "highlightInfo": highlights
+                                }, function () {
+                                    chrome.tabs.executeScript(null, { file: "js/highlight.js" });
+                                })
+                            });
+                        });
+                    })
+                    .fail(function () {
+                        alert("error");
+                    });
             });
         }
 
@@ -287,14 +297,13 @@ function addCandidateToHighlights(actualMatches, data) {
         if (containsSubstring) {
             continue;
         }
-        console.log(match);
         highlights[match] = ["candidate"];
         if (data["candidate_photo_url_large"] != null) {
-            highlights[match].push("<img src=\'" + data["candidate_photo_url_large"] + "\' />");
+            highlights[match].push("<img class=\"w-25 mr-3\" src=\'" + data["candidate_photo_url_large"] + "\' />");
         } else if (data["candidate_photo_url_medium"] != null) {
-            highlights[match].push("<img src=\'" + data["candidate_photo_url_medium"] + "\' />");
+            highlights[match].push("<img class=\"w-25 mr-3\" src=\'" + data["candidate_photo_url_medium"] + "\' />");
         } else if (data["candidate_photo_url_tiny"] != null) {
-            highlights[match].push("<img src=\'" + data["candidate_photo_url_tiny"] + "\' />");
+            highlights[match].push("<img class=\"w-25 mr-3\" src=\'" + data["candidate_photo_url_tiny"] + "\' />");
         } else {
             highlights[match].push("");
         }
@@ -315,21 +324,16 @@ function addCandidateToHighlights(actualMatches, data) {
             highlights[match].push("");
         }
         highlights[match].push(data["candidate_url"])
-        console.log(JSON.stringify(highlights));
+        //console.log(JSON.stringify(highlights));
     }
     displayKeywords(highlights);
 }
 
 function addMeasureToHighlights(actualMatches, data) {
-    console.log(data);
+    
     for (var i = 0; i < actualMatches.length; i++) {
         match = actualMatches[i];
         highlights[match] = ["measure"];
-        // if (data["ballot_item_display_name"] != null) {
-        //     highlights[data["ballot_item_display_name"]].push(data["ballot_item_display_name"]);
-        // } else {
-        //     highlights[data["ballot_item_display_name"]].push("");
-        // }
         if (highlights[match] != null) {
             highlights[match].push(data["ballot_item_display_name"]);
         } else {
@@ -345,14 +349,16 @@ function addMeasureToHighlights(actualMatches, data) {
         } else {
             highlights[match].push("");
         }
+        highlights[match].push(match["text"]);
     }
+    console.log(JSON.stringify(highlights));
     displayKeywords(highlights);
 }
 
 function onWindowLoad() {
     chrome.tabs.executeScript(null, {
         file: "js/getPagesSource.js"
-    }, function() {
+    }, function () {
         // If you try and inject into an extensions page or the webstore/NTP you'll get an error
         if (chrome.runtime.lastError) {
             console.log('There was an error injecting script : \n' + chrome.runtime.lastError.message);
@@ -362,9 +368,8 @@ function onWindowLoad() {
 }
 
 window.onload = onWindowLoad;
-
 // Create the bias scale
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     var colorA = "blue", colorB = "red";
     drawScale("seq1", d3.interpolate(colorA, colorB));
 })
@@ -374,10 +379,10 @@ function drawScale(id, interpolator) {
 
     var cScale = d3.scaleSequential()
         .interpolator(interpolator)
-        .domain([0,99]);
+        .domain([0, 99]);
 
     var xScale = d3.scaleLinear()
-        .domain([0,99])
+        .domain([0, 99])
         .range([0, 580]);
 
     var u = d3.select("#" + id)
@@ -392,69 +397,48 @@ function drawScale(id, interpolator) {
             if (d == 99) {
                 return 6;
             }
-            return Math.floor(xScale(d+1)) - Math.floor(xScale(d)) + 1;
-            })
+            return Math.floor(xScale(d + 1)) - Math.floor(xScale(d)) + 1;
+        })
         .attr("fill", (d) => cScale(d));
 }
 
 function drawLine(response) {
     var svg = d3.select("#seq1");
     svg.append('line')
-    .style("stroke", "white")
-    .style("stroke-width", 2)
-    .attr("x1", (468.0 * ((parseFloat(response) + 42.0) / 84.0)))
-    .attr("y1", 0)
-    .attr("x2", (468.0 * ((parseFloat(response) + 42.0) / 84.0)))
-    .attr("y2", 200);
+        .style("stroke", "white")
+        .style("stroke-width", 2)
+        .attr("x1", (468.0 * ((parseFloat(response) + 42.0) / 84.0)))
+        .attr("y1", 0)
+        .attr("x2", (468.0 * ((parseFloat(response) + 42.0) / 84.0)))
+        .attr("y2", 200);
 }
-
-/*  chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function() {
-    chrome.tabs.executeScript(null, { file: "js/popper.min.js" }, function() {
-        chrome.tabs.executeScript(null, { file: "js/bootstrap.min.js "});
-    });
-}); */
-/*
-
-console.log(highlights)
-chrome.storage.sync.set({
-    "highlightInfo": highlights
-}, function () {
-    chrome.storage.sync.get("highlightInfo", function(data) {
-        console.log(data.highlightInfo)
-    });
-    chrome.tabs.executeScript({
-        file: "js/highlight.js"
-    });
-});
- */
-
-for (let key in highlights) {
-    console.log("cool");
-}
-
 
 function displayKeywords(keywords) {
     let newHTML = "";
     for (let key in keywords) {
         let value = keywords[key];
         if (value[0] == "candidate") {
-            newHTML +=  '<div class="p-3 term">' +
-                            '<div class="d-flex">' +
-                                '<p class="mb-0 main-term">' + key + '</p>' +
-                                '<p class="mb-0 style="font-size: small; font-weight: 300;">&emsp;political candidate</p>' +
-                            '</div>' +
-                            '<p class="mb-0">' + value[2] + ' ' + value[3] + '</p>' +
-                            '<p class="mb-0">' + value[5] + '</p>' +
-                            '<a href=' + value[6] + ' target="_blank" class="mb-0">' + value[6] + '</a>' +
-                        '</div>';
+            newHTML += '<div class="media p-3 term">' +
+                value[1] +
+                '<div class="media-body">' +
+                '<div class="d-flex">' +
+                '<p class="mb-0 main-term">' + key + '</p>' +
+                '<p class="mb-0 style="font-size: small; font-weight: 300;">&emsp;political candidate</p>' +
+                '</div>' +
+                '<p class="mb-0">' + value[2] + ' ' + value[3] + '</p>' +
+                '<p class="mb-0">' + value[5] + '</p>' +
+                '<a href=' + value[6] + ' target="_blank" class="mb-0">' + value[6] + '</a>' +
+                '</div>' +
+                '</div>';
         } else if (value[0] == "measure") {
-            newHTML +=  '<div class="p-3 term">' +
-                            '<div class="d-flex">' +
-                                '<p class="mb-0 main-term">' + value[1] + '</p>' +
-                                '<p class="mb-0 style="font-size: small; font-weight: 300;">&emsp;political measure</p>' +
-                            '</div>' +
-                            '<p class="mb-0">' + value[2] + '</p>' +
-                        '</div>';
+            newHTML += '<div class="p-3 term">' +
+                '<div class="d-flex">' +
+                '<p class="mb-0 main-term">' + value[1] + '</p>' +
+                '<p class="mb-0" style="font-size: small; font-weight: 300;">&emsp;political measure</p>' +
+                '<p class="mb-0" style="font-size: small; font-weight: 300;">&emsp;"' + key + '"</p>' +
+                '</div>' +
+                '<p class="mb-0">' + value[2] + '</p>' +
+                '</div>';
         }
     }
     document.getElementById("term-candidate").innerHTML = newHTML;
