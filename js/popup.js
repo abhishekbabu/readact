@@ -1,11 +1,3 @@
-// $('#btn1').on("click",function() {
-//     chrome.tabs.create({url:"https://www.vote.org/polling-place-locator/"});
-// });
-
-// $('#btn2').on("click",function() {
-//     chrome.tabs.create({url:"https://vote.gov/"});
-// });
-
 var documentHTML;
 
 chrome.runtime.onMessage.addListener(function (request, sender) {
@@ -378,6 +370,14 @@ window.onload = onWindowLoad;
 document.addEventListener('DOMContentLoaded', function () {
     var colorA = "blue", colorB = "red";
     drawScale("seq1", d3.interpolate(colorA, colorB));
+
+    document.getElementById('btn1').addEventListener("click",function() {
+        chrome.tabs.create({url:"https://www.vote.org/polling-place-locator/"});
+   });
+   
+   document.getElementById('btn2').addEventListener("click",function() {
+        chrome.tabs.create({url:"https://vote.gov/"});
+   });
 })
 
 function drawScale(id, interpolator) {
