@@ -1,10 +1,10 @@
-$('#btn1').on("click",function() {
-    chrome.tabs.create({url:"https://www.vote.org/polling-place-locator/"});
-});
+// $('#btn1').on("click",function() {
+//     chrome.tabs.create({url:"https://www.vote.org/polling-place-locator/"});
+// });
 
-$('#btn2').on("click",function() {
-    chrome.tabs.create({url:"https://vote.gov/"});
-});
+// $('#btn2').on("click",function() {
+//     chrome.tabs.create({url:"https://vote.gov/"});
+// });
 
 var documentHTML;
 
@@ -33,6 +33,9 @@ chrome.runtime.onMessage.addListener(function (request, sender) {
         if (plainText.length > 5120) {
             var docs = splitIntoDocs(plainText);
             var input = {};
+            var analysisInput = {};
+            input["kind"] = "EntityRecognition";
+            input["parameters"] = { "modelVersion": "latest" };
             var documents = [];
             for (var i = 1; i <= Object.keys(docs).length; i++) {
                 var document = {};
@@ -41,17 +44,24 @@ chrome.runtime.onMessage.addListener(function (request, sender) {
                 document["text"] = docs[i];
                 documents.push(document);
             }
-            input["documents"] = documents;
+            analysisInput["documents"] = documents;
+            input["analysisInput"] = analysisInput;
             body = JSON.stringify(input);
         } else {
             body = JSON.stringify({
-                "documents": [
-                    {
-                        "language": "en",
-                        "id": "1",
-                        "text": plainText
-                    }
-                ]
+                "kind": "EntityRecognition",
+                "parameters": {
+                    "modelVersion": "latest"
+                },
+                "analysisInput": {
+                    "documents": [
+                        {
+                            "language": "en",
+                            "id": "1",
+                            "text": plainText
+                        }
+                    ]
+                }
             })
         }
         //Measure political bias and associate candidates/measures
@@ -80,33 +90,21 @@ function splitIntoDocs(text) {
 }
 
 //Parse for candidates and measures
-function textAnalytics(body) {
-    $(function () {
-        var params = {
-            // Request parameters
-            "showStats": true,
-        };
-
-        $.ajax({
-            url: "https://westus2.api.cognitive.microsoft.com/text/analytics/v2.1/entities?" + $.param(params),
-            beforeSend: function (xhrObj) {
-                // Request headers
-                xhrObj.setRequestHeader("Content-Type", "application/json");
-                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key", "009a654e207843ea8a219d7f5733a5a1");
-            },
-            type: "POST",
-            // Request body
-            data: body,
+function textAnalytics(info) {
+    fetch('https://readact2022.cognitiveservices.azure.com//language/:analyze-text?api-version=2022-10-01-preview&showStats=true', {
+        method: 'POST',
+        body: info,
+        headers: {
+            "Content-Type": "application/json",
+            "Ocp-Apim-Subscription-Key": "009a654e207843ea8a219d7f5733a5a1"
+        }
+    })
+        .then(response => { return response.json() })
+        .then(data => {
+            parseResultsCandidate(data["results"]);
+            parseResultsMeasure(data["results"]);
         })
-            .done(function (data) {
-                parseResultsCandidate(data);
-                parseResultsMeasure(data);
-            })
-            .fail(function () {
-                alert("error");
-            });
-    });
-
+        .catch(error => console.error(error));
 }
 
 //Measure political bias
@@ -126,53 +124,38 @@ function bias(article) {
         .catch(error => console.error(error));
 }
 
-var candidates = {};
+var candidates = [];
 
 //Parse out candidates from Azure
 function parseResultsCandidate(results) {
-    var entities = results["documents"][0]["entities"];
+    for(var k = 0; k < Object.keys(results["documents"]).length; k++){
+        var entities = results["documents"][k]["entities"];
 
-    var usefulEntities = [];
-
-    for (var i = 0; i < entities.length; i++) {
-        var entity = entities[i];
-        if (entity["type"] === "Person") {
-            usefulEntities.push(entity);
+        for (var i = 0; i < entities.length; i++) {
+            var entity = entities[i];
+            if (entity["category"] === "Person") {
+                candidates.push(entity["text"]);
+            }
         }
     }
-
-    for (var j = 0; j < usefulEntities.length; j++) {
-        var person = usefulEntities[j];
-        var name = person["name"];
-        candidates[name] = [];
-        for (var k = 0; k < person["matches"].length; k++) {
-            candidates[name].push(person["matches"][k]["text"]);
-        }
-    }
+    
     itemCandidate(candidates);
 }
 
 //Parse out measures from Azure
 function parseResultsMeasure(results) {
-    var entities = results["documents"][0]["entities"];
-
-    var usefulEntities = [];
-
-    for (var i = 0; i < entities.length; i++) {
-        var entity = entities[i];
-        if (entity["type"] === "Other") {
-            usefulEntities.push(entity);
+    const measure_set = new Set();
+    for(var k = 0; k < Object.keys(results["documents"]).length; k++){
+        var entities = results["documents"][k]["entities"];
+        for (var i = 0; i < entities.length; i++) {
+            var entity = entities[i];
+            if (entity["category"] === "Skill") {
+                if(!measure_set.has(entity["text"])){
+                    measure_set.add(entity["text"]);
+                    itemMeasure(entity["text"]);
+                }
+            }
         }
-    }
-
-    for (var j = 0; j < usefulEntities.length; j++) {
-        var measure = usefulEntities[j];
-        var name = measure["name"];
-        var actualMatches = [];
-        for (var k = 0; k < measure["matches"].length; k++) {
-            actualMatches.push(measure["matches"][k]["text"]);
-        }
-        itemMeasure(name, actualMatches);
     }
 }
 
@@ -180,86 +163,103 @@ function parseResultsMeasure(results) {
 function itemCandidate(candidates) {
     var id = "KwR5TWQ95ST7ZPqoaQzanSKj3pT7Eg4cEi3MDYTZSgi1XuJFrMHjxm3JzxPAg1E6G4nbPtwYf36wnbrqetQ47WCi";
 
-    $(function () {
-        $.get("https://api.wevoteusa.org/apis/v1/ballotItemHighlightsRetrieve")
-            .done(function (data) {
-                candidate_search(candidates, data, id);
-            })
-            .fail(function () {
-                alert("error in itemizing candidate");
-            });
-    });
+    fetch('https://api.wevoteusa.org/apis/v1/ballotItemHighlightsRetrieve', {
+        method: 'GET',
+    })
+        .then(response => { return response.json() })
+        .then(data => {
+            candidate_search(candidates, data, id);
+        })
+        .catch(error => console.error(error));
 }
 
 //Find measure ballot
-function itemMeasure(measure, actualMatches) {
+function itemMeasure(measure) {
     var id = "KwR5TWQ95ST7ZPqoaQzanSKj3pT7Eg4cEi3MDYTZSgi1XuJFrMHjxm3JzxPAg1E6G4nbPtwYf36wnbrqetQ47WCi";
 
-    $(function () {
-        $.get("https://api.wevoteusa.org/apis/v1/electionsRetrieve", {
-            voter_device_id: id
+    fetch("https://api.wevoteusa.org/apis/v1/electionsRetrieve", {
+        method: 'GET',
+    })
+        .then(response => { return response.json() })
+        .then(data => {
+            get_related_measures(measure, data, id);
         })
-            .done(function (data) {
-                get_related_measures(measure, data, id, actualMatches);
-            })
-            .fail(function () {
-                alert("error");
-            });
-    });
+        .catch(error => console.error(error));
 }
 
 var highlights = {};
 
 function candidate_search(candidates, ballot, voter_id) {
     for (i = 0; i < ballot["highlight_list"].length; i++) {
-        for (let key in candidates) {
-            if (ballot["highlight_list"][i]["name"] == key) {
-                    candidate_id = ballot["highlight_list"][i]["we_vote_id"];
-                    perCandidate(candidate_id, voter_id, candidates[key]);
+        for (j = 0; j < candidates.length; j++) {
+            if (ballot["highlight_list"][i]["name"] == candidates[j]) {
+                candidate_id = ballot["highlight_list"][i]["we_vote_id"];
+                perCandidate(candidate_id, voter_id, candidates[j]);
             }
         }
     }
 }
 
-function perCandidate(candidate_id, voter_id, matches){
-    $(function () {
-        $.get("https://api.wevoteusa.org/apis/v1/candidateRetrieve", {
-            candidate_we_vote_id: candidate_id,
-            voter_device_id: voter_id
-        })
-            .done(function (data) {
-                addCandidateToHighlights(matches, data);
-                chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function () {
-                    chrome.tabs.executeScript(null, { file: "js/bootstrap.bundle.min.js" }, function () {
+function perCandidate(candidate_id, voter_id, name) {
+    fetch("https://api.wevoteusa.org/apis/v1/candidateRetrieve?" + new URLSearchParams({
+        candidate_we_vote_id: candidate_id,
+        voter_device_id: voter_id
+    }), {
+        method: 'GET',
+    })
+        .then(response => { return response.json() })
+        .then(data => {
+            addCandidateToHighlights(name, data);
+
+            chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+                chrome.scripting.executeScript({
+                    target: { tabId: tabs[0].id },
+                    files: ["js/bootstrap.bundle.min.js"],
+                },
+                    () => {
+                        // If you try and inject into an extensions page or the webstore/NTP you'll get an error
+                        if (chrome.runtime.lastError) {
+                            console.log('There was an error injecting script : \n' + chrome.runtime.lastError.message);
+                        }
+                        
                         chrome.storage.sync.set({
                             "highlightInfo": highlights
                         }, function () {
-                            chrome.tabs.executeScript(null, { file: "js/highlight.js" });
+                            chrome.scripting.executeScript({
+                                target: { tabId: tabs[0].id },
+                                files: ["js/highlight.js"],
+                            })
                         })
+                        
                     });
-                });
             });
-    });
+        })
+        .catch(error => console.error(error));
 }
 
-function get_measures_from_election(search_term, id, state, civic_id, actualMatches) {
-    $.get("https://api.wevoteusa.org/apis/v1/ballotItemOptionsRetrieve", {
+function get_measures_from_election(search_term, id, state, civic_id) {
+    fetch("https://api.wevoteusa.org/apis/v1/ballotItemOptionsRetrieve?" + new URLSearchParams({
         voter_device_id: id,
         search_string: search_term,
         state_code: state,
         google_civic_election_id: civic_id
-    }).done(function (data) {
-        measure_search(data, id, actualMatches)
+    }), {
+        method: 'GET'
     })
+        .then(response => { return response.json() })
+        .then(data => {
+            measure_search(data, id, search_term);
+        })
+        .catch(error => console.error(error));
 }
 
-function get_related_measures(measure, elections, id, actualMatches) {
+function get_related_measures(measure, elections, id) {
     for (i = 0; i < elections["election_list"].length; i++) {
-        get_measures_from_election(measure, id, elections["election_list"][i]["state_code"], elections["election_list"][i]["google_civic_election_id"], actualMatches);
+        get_measures_from_election(measure, id, elections["election_list"][i]["state_code"], elections["election_list"][i]["google_civic_election_id"]);
     }
 }
 
-function measure_search(measures, voter_id, actualMatches) {
+function measure_search(measures, voter_id, search_term) {
     if (measures["ballot_item_list"].length > 0) {
         var i = 0;
         while (i < measures["ballot_item_list"].length && measures["ballot_item_list"][i]["kind_of_ballot_item"] !== "MEASURE") {
@@ -267,110 +267,110 @@ function measure_search(measures, voter_id, actualMatches) {
         }
         if (i >= 0 && i < measures["ballot_item_list"].length) {
             measure_id = measures["ballot_item_list"][i]["measure_we_vote_id"];
-            $(function () {
-                $.get("https://api.wevoteusa.org/apis/v1/measureRetrieve", {
-                    measure_we_vote_id: measure_id,
-                    voter_device_id: voter_id
-                })
-                    .done(function (data) {
-                        addMeasureToHighlights(actualMatches, data);
-                        chrome.tabs.executeScript(null, { file: "js/jquery.js" }, function () {
-                            chrome.tabs.executeScript(null, { file: "js/bootstrap.bundle.min.js" }, function () {
+
+            fetch("https://api.wevoteusa.org/apis/v1/measureRetrieve?" + new URLSearchParams({
+                measure_we_vote_id: measure_id,
+                voter_device_id: voter_id
+            }), {
+                method: 'GET'
+            })
+                .then(response => { return response.json() })
+                .then(data => {
+                    addMeasureToHighlights(data, search_term);
+                    chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+                        chrome.scripting.executeScript({
+                            target: { tabId: tabs[0].id },
+                            files: ["js/bootstrap.bundle.min.js"],
+                        },
+                            () => {
+                                // If you try and inject into an extensions page or the webstore/NTP you'll get an error
+                                if (chrome.runtime.lastError) {
+                                    console.log('There was an error injecting script : \n' + chrome.runtime.lastError.message);
+                                }
+                                
                                 chrome.storage.sync.set({
                                     "highlightInfo": highlights
                                 }, function () {
-                                    chrome.tabs.executeScript(null, { file: "js/highlight.js" });
+                                    chrome.scripting.executeScript({
+                                        target: { tabId: tabs[0].id },
+                                        files: ["js/highlight.js"],
+                                    })
                                 })
+                                
                             });
-                        });
-                    })
-                    .fail(function () {
-                        alert("error");
                     });
-            });
+                })
+                .catch(error => console.error(error));
         }
 
     }
 }
 
-function addCandidateToHighlights(actualMatches, data) {
-    for (var i = 0; i < actualMatches.length; i++) {
-        match = actualMatches[i];
-        containsSubstring = false;
-        for (let key in highlights) {
-            if (key.includes(match)) {
-                containsSubstring = true;
-            }
-        }
-        if (containsSubstring) {
-            continue;
-        }
-        highlights[match] = ["candidate"];
-        if (data["candidate_photo_url_large"] != null) {
-            highlights[match].push("<img class=\"w-25 mr-3\" src=\'" + data["candidate_photo_url_large"] + "\' />");
-        } else if (data["candidate_photo_url_medium"] != null) {
-            highlights[match].push("<img class=\"w-25 mr-3\" src=\'" + data["candidate_photo_url_medium"] + "\' />");
-        } else if (data["candidate_photo_url_tiny"] != null) {
-            highlights[match].push("<img class=\"w-25 mr-3\" src=\'" + data["candidate_photo_url_tiny"] + "\' />");
-        } else {
-            highlights[match].push("");
-        }
-        if (data["state_code"] != null) {
-            highlights[match].push(data["state_code"].toUpperCase());
-        } else {
-            highlights[match].push("");
-        }
-        if (data["contest_office_name"] != null) {
-            highlights[match].push(data["contest_office_name"]);
-        } else {
-            highlights[match].push("");
-        }
-        highlights[match].push("");
-        if (data["party"] != null) {
-            highlights[match].push(data["party"]);
-        } else {
-            highlights[match].push("");
-        }
-        highlights[match].push(data["candidate_url"])
+function addCandidateToHighlights(name, data) {
+    highlights[name] = ["candidate"];
+    if (data["candidate_photo_url_large"] != null) {
+        highlights[name].push("<img class=\"w-25 mr-3\" src=\'" + data["candidate_photo_url_large"] + "\' />");
+    } else if (data["candidate_photo_url_medium"] != null) {
+        highlights[name].push("<img class=\"w-25 mr-3\" src=\'" + data["candidate_photo_url_medium"] + "\' />");
+    } else if (data["candidate_photo_url_tiny"] != null) {
+        highlights[name].push("<img class=\"w-25 mr-3\" src=\'" + data["candidate_photo_url_tiny"] + "\' />");
+    } else {
+        highlights[name].push("");
     }
+    if (data["state_code"] != null) {
+        highlights[name].push(data["state_code"].toUpperCase());
+    } else {
+        highlights[name].push("");
+    }
+    if (data["contest_office_name"] != null) {
+        highlights[name].push(data["contest_office_name"]);
+    } else {
+        highlights[name].push("");
+    }
+    highlights[name].push("");
+    if (data["party"] != null) {
+        highlights[name].push(data["party"]);
+    } else {
+        highlights[name].push("");
+    }
+    highlights[name].push(data["candidate_url"]);
     displayKeywords(highlights);
 }
 
-function addMeasureToHighlights(actualMatches, data) {
-    
-    for (var i = 0; i < actualMatches.length; i++) {
-        match = actualMatches[i];
-        highlights[match] = ["measure"];
-        if (highlights[match] != null) {
-            highlights[match].push(data["ballot_item_display_name"]);
-        } else {
-            highlights[match].push("");
-        }
-        if (highlights[match] != null) {
-            highlights[match].push(data["measure_text"]);
-        } else {
-            highlights[match].push("");
-        }
-        if (highlights[match] != null) {
-            highlights[match].push(data["measure_url"]);
-        } else {
-            highlights[match].push("");
-        }
-        highlights[match].push(match["text"]);
+function addMeasureToHighlights(data, search_term) {
+    highlights[search_term] = ["measure"];
+    if (highlights[search_term] != null) {
+        highlights[search_term].push(data["ballot_item_display_name"]);
+    } else {
+        highlights[search_term].push("");
+    }
+    if (highlights[search_term] != null) {
+        highlights[search_term].push(data["measure_text"]);
+    } else {
+        highlights[search_term].push("");
+    }
+    if (highlights[search_term] != null) {
+        highlights[search_term].push(data["measure_url"]);
+    } else {
+        highlights[search_term].push("");
     }
     displayKeywords(highlights);
 }
 
 function onWindowLoad() {
-    chrome.tabs.executeScript(null, {
-        file: "js/getPagesSource.js"
-    }, function () {
-        // If you try and inject into an extensions page or the webstore/NTP you'll get an error
-        if (chrome.runtime.lastError) {
-            console.log('There was an error injecting script : \n' + chrome.runtime.lastError.message);
-        }
+    //potentially use chrome.scripting in ManifestV3
+    chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+        chrome.scripting.executeScript({
+            target: { tabId: tabs[0].id },
+            files: ['js/getPagesSource.js'],
+        },
+            () => {
+                // If you try and inject into an extensions page or the webstore/NTP you'll get an error
+                if (chrome.runtime.lastError) {
+                    console.log('There was an error injecting script : \n' + chrome.runtime.lastError.message);
+                }
+            });
     });
-
 }
 
 window.onload = onWindowLoad;

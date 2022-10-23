@@ -1,5 +1,5 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Readaction",
   "version": "0.0.0.1",
 
@@ -8,20 +8,17 @@
   "homepage_url": "https://github.com/abhishekbabu/ReadAct",
 
   "background": {
-    "scripts": ["js/background.js"],
-    "persistent": false
+    "service_worker": "js/background.js"
   },
 
   "icons": { "16": "img/logo16.png",
              "48": "img/logo48.png",
              "128": "img/logo128.png" },
 
-  "permissions": ["alarms", "storage", "tabs", "<all_urls>"],
-  "browser_action": {
+  "permissions": ["alarms", "storage", "tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
     "default_popup": "html/popup.html"
-  },
-  
-  "content_security_policy": "script-src 'self' https://code.jquery.com/jquery-3.3.1.min.js https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js https://d3js.org/d3.v4.min.js https://d3js.org/d3-scale-chromatic.v1.min.js 'unsafe-eval'; object-src 'self'"
-  
+  }
   
 }
