@@ -15,7 +15,7 @@
              "48": "img/logo48.png",
              "128": "img/logo128.png" },
 
-  "permissions": ["alarms", "storage", "tabs", "scripting"],
+  "permissions": ["storage", "tabs", "scripting"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "html/popup.html"
